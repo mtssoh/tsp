@@ -56,42 +56,63 @@ El ciclo de cada generación consta de cuatro pasos:
    generación sin modificaciones, garantizando que la mejor solución nunca
    empeora entre generaciones.
 
-**Parámetros:** población = 200, generaciones = 500, elitismo = 2, torneo k = 3,
-tasa de mutación = 2%.
+**Parámetros finales** (resultado de experimentación):
+
+| Parámetro | Valor | Justificación |
+|-----------|-------|---------------|
+| Población | 500 | Balance entre diversidad y tiempo por generación |
+| Generaciones | 1000 | Mayor impacto en calidad que aumentar población |
+| Torneo k | 3 | Presión selectiva moderada, evita convergencia prematura |
+| Tasa de mutación | 2% | Introduce variabilidad sin destruir buenos tours |
+| Elitismo | 5 | Los 5 mejores pasan intactos, garantiza no retroceso |
+
+Se probaron configuraciones alternativas (población 200/generaciones 500 y
+población 1000/generaciones 500) observándose que duplicar las generaciones
+produce mejor calidad de solución que duplicar la población, con tiempo de
+ejecución equivalente.
 
 ### Estrategias de paralelización con OpenMP
 
 #### Estrategia 1 — Generación paralela de hijos
 
-En cada generación, la creación de cada hijo (selección + cruzamiento +
-mutación + evaluación de fitness) es independiente de los demás hijos. Se
-paraleliza con `#pragma omp parallel for`, distribuyendo las iteraciones entre
-los hilos disponibles.
+La creación de cada hijo en una generación es independiente: cada hijo requiere
+seleccionar dos padres, cruzarlos, mutarlos y calcular su fitness sin depender
+de los demás hijos. Esto permite distribuir el trabajo entre hilos con
+`#pragma omp parallel for`.
 
-Cada hilo utiliza su propia semilla con `rand_r()` para evitar condiciones de
-carrera en la generación de números aleatorios.
+Un aspecto importante es la generación de números aleatorios: la función
+estándar `rand()` usa una semilla global compartida, lo que produce condiciones
+de carrera cuando varios hilos la llaman simultáneamente. Se utilizó `rand_r()`
+con una semilla independiente por hilo, eliminando este problema.
 
-Se implementaron dos variantes de **balanceo de carga**:
+Al final de cada generación OpenMP introduce una **barrera de sincronización**
+implícita: todos los hilos deben terminar antes de continuar con el
+ordenamiento y el elitismo. Con 1000 generaciones, esto representa 1000
+sincronizaciones por ejecución y es el principal limitante del speedup.
+
+Se implementaron dos técnicas de balanceo de carga:
 
 - **`schedule(static)`**: divide las iteraciones en bloques iguales antes de
-  comenzar. Con 4 hilos y 198 hijos, cada hilo genera exactamente 49 o 50 hijos.
-  Mínima sobrecarga de scheduling; adecuado cuando el costo por iteración es
-  uniforme.
+  empezar. Simple y con mínimo overhead; funciona bien cuando todas las
+  iteraciones tienen costo similar.
 
-- **`schedule(dynamic, 1)`**: asigna iteraciones bajo demanda; cuando un hilo
-  termina solicita la siguiente. Reduce el desbalance si el costo por iteración
-  varía, a costa de mayor overhead de sincronización entre hilos.
+- **`schedule(dynamic)`**: asigna iteraciones bajo demanda a medida que los
+  hilos quedan libres. Más justo ante variaciones en el costo por iteración,
+  aunque introduce mayor overhead de coordinación.
 
 #### Estrategia 2 — Modelo de islas
 
 Cada hilo evoluciona su propia sub-población (**isla**) de forma completamente
-independiente, sin ninguna sincronización durante las 500 generaciones. Al
-finalizar, se comparan los mejores individuos de cada isla y se retiene el
-mejor global.
+independiente durante todas las generaciones, sin ninguna sincronización
+intermedia. Al finalizar, se compara el mejor individuo de cada isla y se
+retiene el mejor global.
 
-Esta estrategia elimina las barreras implícitas de `parallel for` entre
-generaciones y reduce la contención sobre la memoria caché, ya que cada hilo
-trabaja sobre su propio bloque de memoria.
+La diferencia clave respecto a la estrategia anterior es la cantidad de
+sincronizaciones: en lugar de una barrera por generación (1000 en total),
+existe una única barrera al final de toda la ejecución. Esto permite que los
+hilos trabajen a máxima velocidad durante toda la evolución sin esperarse entre
+sí. Cada isla recibe `POP_SIZE / nthreads` individuos, manteniendo el trabajo
+total comparable al de la versión secuencial.
 
 ---
 
