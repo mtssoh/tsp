@@ -1,0 +1,267 @@
+
+============================================================
+  Dataset: data/berlin52.tsp
+============================================================
+
+  --- 1 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/berlin52.tsp
+  Ciudades     : 52
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 1
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                         8943.22     0.224 s    ---      ---
+  Paralela schedule(static)          9109.84     0.199 s   1.12x   112.4%
+  Paralela schedule(dynamic)         9986.27     0.204 s   1.10x   109.6%
+  Modelo de Islas                    8926.20     0.200 s   1.12x   111.8%
+
+
+  --- 4 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/berlin52.tsp
+  Ciudades     : 52
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 4
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                         9677.40     0.210 s    ---      ---
+  Paralela schedule(static)          9797.58     0.176 s   1.20x    29.9%
+  Paralela schedule(dynamic)        10219.33     0.189 s   1.11x    27.8%
+  Modelo de Islas                    8377.91     0.108 s   1.95x    48.9%
+
+
+  --- 8 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/berlin52.tsp
+  Ciudades     : 52
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 8
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                         8861.60     0.202 s    ---      ---
+  Paralela schedule(static)         10049.34     0.209 s   0.96x    12.0%
+  Paralela schedule(dynamic)         8856.47     0.227 s   0.89x    11.1%
+  Modelo de Islas                    8595.67     0.034 s   5.87x    73.4%
+
+
+  --- 12 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/berlin52.tsp
+  Ciudades     : 52
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 12
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                         8861.60     0.199 s    ---      ---
+  Paralela schedule(static)          9029.19     0.260 s   0.76x     6.4%
+  Paralela schedule(dynamic)         8691.68     0.269 s   0.74x     6.2%
+  Modelo de Islas                    9100.40     0.032 s   6.30x    52.5%
+
+
+  --- 20 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/berlin52.tsp
+  Ciudades     : 52
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 20
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                         8535.21     0.206 s    ---      ---
+  Paralela schedule(static)          9343.26     0.274 s   0.75x     3.8%
+  Paralela schedule(dynamic)         9395.43     0.201 s   1.03x     5.1%
+  Modelo de Islas                    9591.75     0.017 s  12.24x    61.2%
+
+
+============================================================
+  Dataset: data/kroA200.tsp
+============================================================
+
+  --- 1 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/kroA200.tsp
+  Ciudades     : 200
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 1
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                       181330.77     0.656 s    ---      ---
+  Paralela schedule(static)        184291.70     0.652 s   1.01x   100.5%
+  Paralela schedule(dynamic)       195626.02     0.660 s   0.99x    99.3%
+  Modelo de Islas                  188327.23     0.663 s   0.99x    98.9%
+
+
+  --- 4 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/kroA200.tsp
+  Ciudades     : 200
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 4
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                       185250.74     0.647 s    ---      ---
+  Paralela schedule(static)        185701.76     0.412 s   1.57x    39.3%
+  Paralela schedule(dynamic)       183141.40     0.379 s   1.71x    42.7%
+  Modelo de Islas                  173820.11     0.187 s   3.47x    86.7%
+
+
+  --- 8 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/kroA200.tsp
+  Ciudades     : 200
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 8
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                       186804.77     0.657 s    ---      ---
+  Paralela schedule(static)        190629.70     0.441 s   1.49x    18.6%
+  Paralela schedule(dynamic)       187430.68     0.400 s   1.64x    20.5%
+  Modelo de Islas                  163575.14     0.113 s   5.84x    72.9%
+
+
+  --- 12 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/kroA200.tsp
+  Ciudades     : 200
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 12
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                       174318.96     0.656 s    ---      ---
+  Paralela schedule(static)        185063.83     0.622 s   1.06x     8.8%
+  Paralela schedule(dynamic)       194637.20     0.501 s   1.31x    10.9%
+  Modelo de Islas                  159272.66     0.098 s   6.70x    55.8%
+
+
+  --- 20 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/kroA200.tsp
+  Ciudades     : 200
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 20
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                       183841.04     0.669 s    ---      ---
+  Paralela schedule(static)        193701.76     0.613 s   1.09x     5.5%
+  Paralela schedule(dynamic)       187639.04     0.382 s   1.75x     8.8%
+  Modelo de Islas                  162217.84     0.057 s  11.71x    58.5%
+
+
+============================================================
+  Dataset: data/pr1002.tsp
+============================================================
+
+  --- 1 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/pr1002.tsp
+  Ciudades     : 1002
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 1
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                      5337334.02     3.233 s    ---      ---
+  Paralela schedule(static)       5379668.07     3.214 s   1.01x   100.6%
+  Paralela schedule(dynamic)      5299872.69     3.206 s   1.01x   100.9%
+  Modelo de Islas                 5356075.63     3.261 s   0.99x    99.2%
+
+
+  --- 4 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/pr1002.tsp
+  Ciudades     : 1002
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 4
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                      5320011.92     3.225 s    ---      ---
+  Paralela schedule(static)       5374258.57     1.553 s   2.08x    51.9%
+  Paralela schedule(dynamic)      5348607.80     1.483 s   2.17x    54.4%
+  Modelo de Islas                 5266695.64     0.950 s   3.39x    84.9%
+
+
+  --- 8 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/pr1002.tsp
+  Ciudades     : 1002
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 8
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                      5375203.43     3.220 s    ---      ---
+  Paralela schedule(static)       5306140.37     1.741 s   1.85x    23.1%
+  Paralela schedule(dynamic)      5303649.43     1.455 s   2.21x    27.7%
+  Modelo de Islas                 5033107.60     0.548 s   5.88x    73.4%
+
+
+  --- 12 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/pr1002.tsp
+  Ciudades     : 1002
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 12
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                      5333738.45     3.197 s    ---      ---
+  Paralela schedule(static)       5372875.77     2.134 s   1.50x    12.5%
+  Paralela schedule(dynamic)      5315018.89     1.538 s   2.08x    17.3%
+  Modelo de Islas                 5140524.95     0.471 s   6.79x    56.6%
+
+
+  --- 20 hilo(s) ---
+
+=== TSP — Algoritmo Genetico + OpenMP ===
+  Instancia    : data/pr1002.tsp
+  Ciudades     : 1002
+  Poblacion    : 500
+  Generaciones : 1000
+  Hilos        : 20
+
+  Estrategia                      Mejor tour      Tiempo  Speedup  Eficiencia
+  ------------------------------------------------------------------------
+  Secuencial                      5277985.58     3.219 s    ---      ---
+  Paralela schedule(static)       5310875.52     2.131 s   1.51x     7.6%
+  Paralela schedule(dynamic)      5332091.53     1.445 s   2.23x    11.1%
+  Modelo de Islas                 5050579.89     0.292 s  11.02x    55.1%
+
