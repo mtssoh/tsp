@@ -3,29 +3,28 @@
 **Materia:** Sistemas Paralelos y Distribuidos  
 **Carrera:** Ingeniería Informática  
 **Alumno:** Matías Domin  
-**Fecha de entrega:** 11 de junio de 2026  
+**Fecha de entrega:** 11 de junio de 2026
 
 ---
 
 ## Introducción
 
-El Problema del Vendedor Viajante (TSP, _Travelling Salesman Problem_) consiste en
-encontrar el recorrido de menor distancia que visite exactamente una vez cada ciudad
-de un conjunto dado y regrese al punto de origen. Pertenece a la clase NP-completo,
-por lo que no se conoce ningún algoritmo exacto que lo resuelva en tiempo polinomial;
-para instancias de cientos o miles de ciudades es necesario recurrir a heurísticas o
-metaheurísticas.
+El Problema del Vendedor Viajante (TSP) consiste en encontrar el recorrido de
+menor distancia que visite exactamente una vez cada ciudad de un conjunto dado
+y regrese al punto de origen. Pertenece a la clase NP-completo: no existe
+algoritmo exacto de tiempo polinomial, por lo que para instancias de cientos o
+miles de ciudades se recurre a metaheurísticas.
 
 Los **algoritmos genéticos (AG)** son metaheurísticas inspiradas en la evolución
 natural. Mantienen una *población* de soluciones candidatas y las mejoran
-iterativamente mediante selección, cruzamiento y mutación. Combinados con
-**OpenMP**, una API estándar para programación paralela en memoria compartida, es
-posible acelerar la búsqueda aprovechando los múltiples núcleos de un procesador
-moderno.
+iterativamente aplicando selección, cruzamiento y mutación. Combinados con
+**OpenMP**, una API estándar para programación paralela en memoria compartida,
+es posible acelerar la búsqueda aprovechando los múltiples núcleos de los
+procesadores modernos.
 
 El objetivo de este trabajo es implementar un AG paralelo para el TSP, comparar
-dos estrategias de paralelización y dos técnicas de balanceo de carga, y analizar
-el impacto en tiempo de ejecución, speedup y eficiencia.
+dos estrategias de paralelización con dos técnicas de balanceo de carga, y
+analizar el impacto en tiempo de ejecución, speedup y eficiencia.
 
 ---
 
@@ -34,118 +33,147 @@ el impacto en tiempo de ejecución, speedup y eficiencia.
 ### Algoritmo Genético para TSP
 
 Cada individuo de la población representa un **tour**: una permutación de las N
-ciudades. La función de aptitud (_fitness_) es la longitud total del recorrido —
+ciudades. La función de aptitud (*fitness*) es la longitud total del recorrido —
 menor es mejor.
 
 El ciclo de cada generación consta de cuatro pasos:
 
-1. **Selección por torneo**: se eligen k=5 individuos al azar y se retiene el de
-   menor fitness. Favorece a los buenos pero mantiene diversidad.
-2. **Cruzamiento OX (_Order Crossover_)**: se copia un segmento aleatorio del
-   padre 1 al hijo; las ciudades faltantes se rellenan en el orden en que aparecen
-   en el padre 2, preservando la estructura relativa de ambos progenitores.
-3. **Mutación por intercambio**: con probabilidad 0.02 por ciudad se intercambian
-   dos posiciones al azar, introduciendo variabilidad para evitar mínimos locales.
-4. **Elitismo**: los 2 mejores individuos de la generación anterior pasan
-   directamente a la siguiente sin modificaciones, garantizando que la mejor
-   solución nunca empeora.
+1. **Selección por torneo**: se eligen 3 individuos al azar y se retiene el de
+   menor fitness. Favorece a los mejores individuos manteniendo diversidad
+   genética en la población.
 
-**Parámetros:** población = 200, generaciones = 500, elitismo = 2, torneo k = 5.
+2. **Cruzamiento de 1 punto**: se copia el prefijo `[0..cut]` del padre 1 al
+   hijo; las ciudades restantes se toman del padre 2 en orden, saltando las ya
+   presentes. Para TSP, donde cada ciudad debe aparecer exactamente una vez,
+   este paso de reparación es necesario para mantener la validez del tour.
+
+3. **Mutación por reemplazo**: con probabilidad 0.02 por ciudad, se elige una
+   posición aleatoria y se intercambian las ciudades de ambas posiciones. Para
+   permutaciones, el intercambio es equivalente al reemplazo aleatorio y
+   garantiza que el tour siga siendo válido.
+
+4. **Elitismo**: los 2 mejores individuos pasan directamente a la siguiente
+   generación sin modificaciones, garantizando que la mejor solución nunca
+   empeora entre generaciones.
+
+**Parámetros:** población = 200, generaciones = 500, elitismo = 2, torneo k = 3,
+tasa de mutación = 2%.
 
 ### Estrategias de paralelización con OpenMP
 
 #### Estrategia 1 — Generación paralela de hijos
 
-En cada generación, la creación de cada hijo (selección + cruzamiento + mutación)
-es independiente de los demás hijos. Se paraleliza el bucle con
-`#pragma omp parallel for`, repartiendo las `pop_size - elite` iteraciones entre
-los hilos disponibles. Se usan semillas `rand_r()` por hilo para evitar condiciones
-de carrera en la generación de números aleatorios.
+En cada generación, la creación de cada hijo (selección + cruzamiento +
+mutación + evaluación de fitness) es independiente de los demás hijos. Se
+paraleliza con `#pragma omp parallel for`, distribuyendo las iteraciones entre
+los hilos disponibles.
 
-Se implementaron dos variantes de balanceo de carga de OpenMP:
+Cada hilo utiliza su propia semilla con `rand_r()` para evitar condiciones de
+carrera en la generación de números aleatorios.
+
+Se implementaron dos variantes de **balanceo de carga**:
 
 - **`schedule(static)`**: divide las iteraciones en bloques iguales antes de
   comenzar. Con 4 hilos y 198 hijos, cada hilo genera exactamente 49 o 50 hijos.
   Mínima sobrecarga de scheduling; adecuado cuando el costo por iteración es
   uniforme.
-- **`schedule(dynamic, 1)`**: asigna iteraciones de a una bajo demanda; cuando un
-  hilo termina solicita la siguiente. Elimina el desbalance si el costo por
-  iteración varía, a costa de mayor overhead de sincronización.
+
+- **`schedule(dynamic, 1)`**: asigna iteraciones bajo demanda; cuando un hilo
+  termina solicita la siguiente. Reduce el desbalance si el costo por iteración
+  varía, a costa de mayor overhead de sincronización entre hilos.
 
 #### Estrategia 2 — Modelo de islas
 
-Cada hilo evoluciona su propia sub-población (**isla**) completamente de forma
+Cada hilo evoluciona su propia sub-población (**isla**) de forma completamente
 independiente, sin ninguna sincronización durante las 500 generaciones. Al
-finalizar, se comparan los mejores individuos de cada isla y se retiene el global.
-Esto elimina las barreras implícitas de `parallel for` entre generaciones y reduce
-la contención sobre la memoria caché.
+finalizar, se comparan los mejores individuos de cada isla y se retiene el
+mejor global.
+
+Esta estrategia elimina las barreras implícitas de `parallel for` entre
+generaciones y reduce la contención sobre la memoria caché, ya que cada hilo
+trabaja sobre su propio bloque de memoria.
 
 ---
 
 ## Resultados
 
-Los experimentos se realizaron con 4 hilos sobre tres instancias de TSPLIB.
-Se reporta el mejor tour encontrado, el tiempo de ejecución, el speedup
-(T_secuencial / T_paralelo) y la eficiencia (speedup / nthreads).
+Los experimentos se realizaron en un procesador **Intel Core i7-12700** (20
+hilos lógicos) bajo Linux. Se reportan los resultados para 1, 4, 12 y 20 hilos.
+El speedup se calcula como T_secuencial / T_paralelo y la eficiencia como
+speedup / cantidad_de_hilos.
 
 ### berlin52 — 52 ciudades
 
-| Estrategia                  | Mejor tour | Tiempo  | Speedup | Eficiencia |
-|-----------------------------|-----------|---------|---------|------------|
-| Secuencial                  | 8 339.81  | 0.045 s |  —      |  —         |
-| Paralela `schedule(static)` | 8 922.19  | 0.059 s | 0.77×   | 19.1 %     |
-| Paralela `schedule(dynamic)`| 7 998.62  | 0.064 s | 0.71×   | 17.8 %     |
-| Modelo de Islas             | 9 190.81  | 0.012 s | 3.83×   | 95.7 %     |
+| Estrategia | Hilos | Tiempo | Speedup | Eficiencia |
+|---|---|---|---|---|
+| Secuencial | — | 0.044 s | — | — |
+| Paralela `schedule(static)` | 4 | 0.035 s | 1.19× | 29.9% |
+| Paralela `schedule(static)` | 12 | 0.066 s | 0.67× | 5.6% |
+| Paralela `schedule(static)` | 20 | 0.067 s | 0.80× | 4.0% |
+| Paralela `schedule(dynamic)` | 4 | 0.039 s | 1.08× | 26.9% |
+| Paralela `schedule(dynamic)` | 20 | 0.047 s | 1.15× | 5.7% |
+| Modelo de Islas | 4 | 0.011 s | 3.62× | 90.6% |
+| Modelo de Islas | 12 | 0.006 s | 7.11× | 59.2% |
+| Modelo de Islas | 20 | 0.004 s | **13.08×** | 65.4% |
 
 ### kroA200 — 200 ciudades
 
-| Estrategia                  | Mejor tour  | Tiempo  | Speedup | Eficiencia |
-|-----------------------------|------------|---------|---------|------------|
-| Secuencial                  | 188 155.77 | 0.155 s |  —      |  —         |
-| Paralela `schedule(static)` | 187 933.31 | 0.194 s | 0.80×   | 19.9 %     |
-| Paralela `schedule(dynamic)`| 185 543.32 | 0.206 s | 0.75×   | 18.8 %     |
-| Modelo de Islas             | 178 988.94 | 0.043 s | 3.62×   | 90.4 %     |
+| Estrategia | Hilos | Tiempo | Speedup | Eficiencia |
+|---|---|---|---|---|
+| Secuencial | — | 0.145 s | — | — |
+| Paralela `schedule(static)` | 4 | 0.076 s | 1.72× | 42.9% |
+| Paralela `schedule(static)` | 20 | 0.126 s | 1.08× | 5.4% |
+| Paralela `schedule(dynamic)` | 4 | 0.071 s | 1.85× | 46.3% |
+| Paralela `schedule(dynamic)` | 20 | 0.081 s | 1.68× | 8.4% |
+| Modelo de Islas | 4 | 0.037 s | 3.55× | 88.8% |
+| Modelo de Islas | 12 | 0.020 s | 6.44× | 53.7% |
+| Modelo de Islas | 20 | 0.011 s | **12.64×** | 63.2% |
 
 ### pr1002 — 1 002 ciudades
 
-| Estrategia                  | Mejor tour    | Tiempo  | Speedup | Eficiencia |
-|-----------------------------|--------------|---------|---------|------------|
-| Secuencial                  | 5 304 931.90 | 0.821 s |  —      |  —         |
-| Paralela `schedule(static)` | 5 432 921.76 | 0.800 s | 1.03×   | 25.7 %     |
-| Paralela `schedule(dynamic)`| 5 293 104.45 | 0.892 s | 0.92×   | 23.0 %     |
-| Modelo de Islas             | 5 286 023.46 | 0.217 s | 3.78×   | 94.6 %     |
+| Estrategia | Hilos | Tiempo | Speedup | Eficiencia |
+|---|---|---|---|---|
+| Secuencial | — | 0.648 s | — | — |
+| Paralela `schedule(static)` | 4 | 0.390 s | 1.60× | 39.9% |
+| Paralela `schedule(static)` | 20 | 0.449 s | 1.42× | 7.1% |
+| Paralela `schedule(dynamic)` | 4 | 0.304 s | 2.05× | 51.3% |
+| Paralela `schedule(dynamic)` | 20 | 0.293 s | 2.17× | 10.9% |
+| Modelo de Islas | 4 | 0.181 s | 3.45× | 86.2% |
+| Modelo de Islas | 12 | 0.096 s | 6.59× | 54.9% |
+| Modelo de Islas | 20 | 0.060 s | **10.53×** | 52.6% |
 
 ---
 
 ## Conclusiones
 
-**La estrategia `parallel for` no escala.** En las tres instancias el speedup ronda
-0.7×–1.0×, es decir, la versión paralela no es más rápida que la secuencial. La
-causa es la contención de memoria: la función `tour_length()` accede a la matriz de
-distancias (`N × N` doubles) en un orden aleatorio determinado por el tour. Para
-pr1002 esa matriz ocupa ~8 MB; con 4 hilos accediendo simultáneamente a posiciones
-dispersas, el ancho de banda de la caché L3 se satura y los núcleos esperan datos.
-El overhead de las barreras implícitas entre generaciones agrava el problema. La
-diferencia entre `schedule(static)` y `schedule(dynamic)` es mínima porque el costo
-real no está en la asignación de iteraciones sino en los accesos a memoria.
+**La estrategia `parallel for` escala pobremente**, con speedup máximo de ~2×
+en el mejor caso (pr1002 con dynamic). La causa principal es la **Ley de
+Amdahl**: por cada generación existe una barrera de sincronización implícita al
+final del `parallel for`, más la parte serial obligatoria (ordenamiento de
+población, copia del elitismo). Con 500 generaciones, esto representa 500
+sincronizaciones. Para instancias pequeñas como berlin52, el overhead de estas
+barreras supera al trabajo paralelo, resultando en speedup < 1× al aumentar los
+hilos (0.67× con 12 hilos).
 
-**El modelo de islas sí escala (~3.7× con 4 hilos, ~93% de eficiencia promedio).**
-Al no haber comunicación entre islas durante la evolución se eliminan las barreras
-y cada hilo trabaja sobre su propio bloque de población, mejorando la localidad
-temporal de los accesos a la matriz de distancias. La eficiencia cercana al 100%
-indica que el tiempo de CPU se aprovecha casi por completo.
+`schedule(dynamic)` muestra una leve ventaja sobre `schedule(static)` en
+instancias grandes (pr1002), donde el costo de evaluar el fitness de un tour
+varía según su longitud y hay más trabajo real por iteración que justifica el
+balanceo dinámico.
 
-**Calidad de la solución**: el modelo de islas iguala o supera a las estrategias
-con `parallel for` en calidad del tour (kroA200: 178 989 vs. 185 543), además de
-ser 4× más rápido. La exploración paralela e independiente de múltiples sub-espacios
-de búsqueda actúa como una diversificación natural que ayuda a evitar mínimos
-locales.
+**El modelo de islas escala eficientemente**, alcanzando 10.53× con 20 hilos
+en pr1002 y 13.08× en berlin52. La razón es que elimina casi toda la
+sincronización: en lugar de 500 barreras por ejecución, existe una sola barrera
+al final para comparar los mejores individuos de cada isla. Cada hilo trabaja
+sobre su propio bloque de memoria durante toda la evolución, reduciendo la
+contención en caché. La eficiencia decrece al aumentar los hilos (de ~90% con 4
+hilos a ~52-65% con 20 hilos) debido a la saturación del ancho de banda de
+memoria al acceder simultáneamente a la matriz de distancias.
 
-En conclusión, para este tipo de problema en el que el trabajo por iteración
-involucra accesos irregulares a estructuras grandes, el modelo de islas es
-claramente superior tanto en velocidad como en eficiencia, mientras que la
-paralelización a nivel de bucle con `schedule(static/dynamic)` queda limitada por
-el cuello de botella del subsistema de memoria.
+En conclusión, para algoritmos genéticos en TSP la granularidad de la
+paralelización es determinante: paralelizar dentro de cada generación introduce
+demasiado overhead de sincronización, mientras que paralelizar generaciones
+completas de forma independiente aprovecha eficientemente los recursos del
+procesador.
 
 ---
 
