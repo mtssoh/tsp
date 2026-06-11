@@ -12,7 +12,7 @@ typedef struct {
 
 #define TOURNAMENT_K   3      /* candidatos por torneo de seleccion */
 #define MUTATION_RATE  0.02   /* probabilidad de mutar cada ciudad  */
-#define ELITE_COUNT    2      /* individuos que pasan intactos      */
+#define ELITE_COUNT    5      /* individuos que pasan intactos      */
 
 /* =========================================================================
    INICIALIZACION

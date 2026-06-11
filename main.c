@@ -10,7 +10,7 @@
    PARAMETROS DEL GA
    ========================================================================= */
 
-#define POP_SIZE    200
+#define POP_SIZE    1000
 #define GENERATIONS 500
 #define ELITE       ELITE_COUNT
 
